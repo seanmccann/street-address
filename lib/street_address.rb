@@ -1,6 +1,28 @@
 module StreetAddress
   class US
     VERSION = '2.0.0'
+    
+    # Load C extension if available, otherwise fall back to pure Ruby
+    begin
+      require 'street_address/street_address_ext'
+    rescue LoadError
+      # Extension not available, will use pure Ruby
+    end
+    
+    # Module for C-optimized regex operations
+    module RegexHelper
+      # Fallback implementation if C extension is not available
+      def self.parse_address_with_regexp(address_str, regexp_str)
+        regexp = Regexp.new(regexp_str)
+        regexp.match(address_str)
+      end
+      
+      def self.match_to_hash_ext(match)
+        hash = {}
+        match.names.each { |name| hash[name] = match[name] if match[name] }
+        hash
+      end
+    end
 
     DIRECTIONAL = {
       "north" => "N",
@@ -710,21 +732,27 @@ module StreetAddress
       end
 
       def parse_address(address, args={})
-        return unless match = address_regexp.match(address)
+        # Use C-optimized regex matching if available
+        match = RegexHelper.parse_address_with_regexp(address, address_regexp.source)
+        return unless match
 
-        to_address( match_to_hash(match), args )
+        to_address(RegexHelper.match_to_hash_ext(match), args)
       end
 
       def parse_informal_address(address, args={})
-        return unless match = informal_address_regexp.match(address)
+        # Use C-optimized regex matching if available
+        match = RegexHelper.parse_address_with_regexp(address, informal_address_regexp.source)
+        return unless match
 
-        to_address( match_to_hash(match), args )
+        to_address(RegexHelper.match_to_hash_ext(match), args)
       end
 
       def parse_intersection(intersection, args)
-        return unless match = intersection_regexp.match(intersection)
+        # Use C-optimized regex matching if available
+        match = RegexHelper.parse_address_with_regexp(intersection, intersection_regexp.source)
+        return unless match
 
-        hash = match_to_hash(match)
+        hash = RegexHelper.match_to_hash_ext(match)
 
         streets = intersection_regexp.named_captures["street"].map { |pos|
           match[pos.to_i]
@@ -755,11 +783,6 @@ module StreetAddress
       end
 
       private
-        def match_to_hash(match)
-          hash = {}
-          match.names.each { |name| hash[name] = match[name] if match[name] }
-          return hash
-        end
 
         def to_address(input, args)
           # strip off some punctuation and whitespace

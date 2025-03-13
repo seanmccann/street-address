@@ -11,7 +11,9 @@ Gem::Specification.new do |s|
   s.authors = ["Derrek Long"]
   s.require_paths = ["lib"]
   s.email = "derreklong@gmail.com"
-  s.files = `git ls-files`.split("\n")
+  s.files = `git ls-files`.split("\n") + 
+             Dir.glob('ext/**/*.{c,h,rb}') +
+             Dir.glob('lib/**/*.so')
   s.test_files = `git ls-files -- test/*`.split("\n")
   s.homepage = "https://github.com/street-address-rb/street-address"
   s.description = <<desc
@@ -22,5 +24,10 @@ desc
 
   s.add_development_dependency "bundler"
   s.add_development_dependency "rake"
+  s.add_development_dependency "rake-compiler"
   s.add_development_dependency "minitest"
+  
+  # C extension
+  s.extensions = ['ext/street_address/extconf.rb']
+  s.require_paths = ['lib', 'ext']
 end

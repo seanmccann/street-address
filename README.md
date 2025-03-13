@@ -65,6 +65,24 @@ or from Gemfile
     # same results as above
 ```
 
+## C Extension for Performance
+
+This gem includes a C extension that dramatically improves the performance of address parsing by optimizing the most expensive regex operations. The extension is automatically used if available, with a pure Ruby fallback implementation.
+
+To see the performance improvement, run the included benchmark:
+
+```
+ruby benchmark/benchmark.rb
+```
+
+### Building the Extension
+
+The extension is automatically built when the gem is installed. If you're developing locally:
+
+```
+rake compile
+```
+
 ## License
 The [MIT Licencse](http://opensource.org/licenses/MIT)
 
